@@ -9,8 +9,9 @@ description = "Simple voice AI assistant built with LiveKit Agents for Python"
 requires-python = ">=3.10, <3.15"
 
 dependencies = [
-    "livekit-agents~=1.8",
+    "livekit-agents[google,images]~=1.8",
     "livekit-plugins-ai-coustics~=0.3",
+    "playwright>=1.63.0",
     "python-dotenv",
 ]
 
@@ -35,6 +36,9 @@ where = ["src"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+# The app modules (agent.py, browser.py, tools.py) live flat inside src/, so
+# tests import them directly rather than through a package.
+pythonpath = ["src"]
 
 [tool.ruff]
 line-length = 88

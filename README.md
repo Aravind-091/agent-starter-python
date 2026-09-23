@@ -85,6 +85,7 @@ Clone the repository and install dependencies to a virtual environment:
 ```console
 cd agent-starter-python
 uv sync
+uv run playwright install chromium
 ```
 
 Sign up for [LiveKit Cloud](https://cloud.livekit.io/) then set up the environment by copying `.env.example` to `.env.local` and filling in the required keys:
@@ -101,6 +102,16 @@ lk app env --write --destination .env.local
 ```
 
 </details>
+
+### Browser control
+
+Jarvis can drive a real Chromium browser through its Playwright tools (`open_url`, `search_the_web`, `click`, `type_text`, `take_screenshot`, and 14 more — 19 tools in total). Install the browser once after `uv sync`:
+
+```console
+uv run playwright install chromium
+```
+
+The browser runs headless by default. To watch it work while Jarvis browses, set `BROWSER_HEADLESS=false` in `.env.local`. One Chromium instance is shared for the lifetime of an agent session and closed cleanly when the session ends.
 
 ## Run the agent
 
@@ -147,7 +158,7 @@ For advanced customization, see the [complete frontend guide](https://docs.livek
 Simulations run full multi-turn conversations between a simulated user and your agent on LiveKit Cloud, then judge each transcript. The scenarios live in [`scenarios.yaml`](scenarios.yaml). Run them locally with the [LiveKit CLI](https://docs.livekit.io/intro/basics/cli/):
 
 ```console
-lk agent simulate --scenarios scenarios.yaml
+lk agent simulate text --scenarios scenarios.yaml
 ```
 
 The `Simulations` workflow in `.github/workflows/simulations.yml` runs the same file on every merge to `main` and on demand from the Actions tab. It runs there rather than on every pull request push because each run spends real inference. See the [simulations guide](https://docs.livekit.io/agents/start/testing/simulations/) for how to write scenarios and read results.

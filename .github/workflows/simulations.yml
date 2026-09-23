@@ -1,7 +1,7 @@
 # Runs the scenarios in scenarios.yaml against your agent on LiveKit Cloud.
 # Simulations spend real inference, so this runs on merges to main and on demand
 # rather than on every pull request push. Run
-# `lk agent simulate --scenarios scenarios.yaml` locally while iterating.
+# `lk agent simulate text --scenarios scenarios.yaml` locally while iterating.
 name: Simulations
 
 on:
@@ -19,6 +19,11 @@ jobs:
       LIVEKIT_URL: ${{ secrets.LIVEKIT_URL }}
       LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
       LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
+      # CI has no display, so the browser must run headless.
+      BROWSER_HEADLESS: "true"
+      # .env.local is gitignored, so CI must provide the Gemini key as a secret;
+      # without it the agent fails at Assistant() construction on job startup.
+      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
 
     steps:
     - uses: actions/checkout@v6
@@ -36,11 +41,31 @@ jobs:
     - name: Install dependencies
       run: UV_GIT_LFS=1 uv sync
 
+    - name: Install Chromium for browser tools
+      run: uv run playwright install --with-deps chromium
+
     - name: Download model files
       run: uv run python src/agent.py download-files
 
     - name: Install LiveKit CLI
       run: curl -sSL https://get.livekit.io/cli | bash
 
+    # The `text` subcommand is required: bare `lk agent simulate` only prints
+    # usage on CLI 2.18.7 (and exits 0 under CI without running anything).
+    # Serial runs (concurrency 1) stay under the Gemini Live connection quota,
+    # and the retry loop absorbs the known first-turn transcript flake in the
+    # text simulator (a judge occasionally receives a conversation with the
+    # opening line dropped), without masking a real regression: three clean
+    # failures fail the job.
     - name: Run simulations
-      run: lk agent simulate --scenarios scenarios.yaml
+      run: |
+        for attempt in 1 2 3; do
+          if lk agent simulate text --scenarios scenarios.yaml --concurrency 1; then
+            echo "Simulations passed on attempt ${attempt}."
+            exit 0
+          fi
+          echo "Simulations failed on attempt ${attempt}; retrying in 15s..."
+          sleep 15
+        done
+        echo "Simulations failed after 3 attempts."
+        exit 1

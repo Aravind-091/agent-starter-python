@@ -15,9 +15,21 @@ ENV PYTHONUNBUFFERED=1
 # expense of a slightly longer build.
 ENV UV_COMPILE_BYTECODE=1
 
-# Ensure local models are downloaded to a shared directory accessible by all stages.
+# Playwright needs the build and production stages to agree on where browsers
+# live: /app is copied between them, so the download survives the stage split.
+ENV PLAYWRIGHT_BROWSERS_PATH=/app/.cache/ms-playwright
+
+# There is no display in the container, so the browser always runs headless.
+ENV BROWSER_HEADLESS=true
+
+# Local models are downloaded to a shared directory accessible by all stages.
 ENV HF_HOME=/app/.cache/huggingface
 ENV TORCH_HOME=/app/.cache/torch
+
+# Chromium's system libraries, installed once in the base stage because both the
+# build stage and the final image derive from it. Without these the browser
+# downloads fine but fails to launch in production.
+RUN uvx playwright install-deps chromium && rm -rf /var/lib/apt/lists/*
 
 # --- Build stage ---
 # Install dependencies, build native extensions, and prepare the application
@@ -47,6 +59,11 @@ RUN mkdir -p src
 # This creates a virtual environment and installs all dependencies
 # Ensure your uv.lock file is checked in for consistency across environments
 RUN uv sync --locked
+
+# Download Chromium into the shared browser path. Cached on the lock file, so
+# it only re-runs when dependencies change. The system libraries it needs were
+# installed in the base stage above.
+RUN uv run playwright install chromium
 
 # Pre-download any ML models or files the agent needs
 # This runs before COPY . . so the download layer is cached across code-only changes.

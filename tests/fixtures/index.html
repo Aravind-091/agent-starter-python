@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Page</title>
+  <link rel="stylesheet" href="missing.css">
+</head>
+<body>
+  <h1>Test Page</h1>
+  <p id="intro">Welcome to the Jarvis browser test page.</p>
+
+  <button id="btn-add" onclick="document.getElementById('count').textContent = '1'">Add to cart</button>
+  <span id="count">0</span>
+
+  <button id="btn-submit-order" onclick="document.getElementById('order-result').textContent = 'ordered'">Submit Order</button>
+  <span id="order-result"></span>
+
+  <button id="btn-double" ondblclick="document.getElementById('dbl-count').textContent = '2'">Double Me</button>
+  <span id="dbl-count">0</span>
+
+  <button id="btn-right" oncontextmenu="event.preventDefault(); document.getElementById('right-result').textContent = 'right-clicked'">Right Target</button>
+  <span id="right-result"></span>
+
+  <button id="btn-alert" onclick="alert('Heads up')">Raise Alert</button>
+  <button id="btn-confirm" onclick="if (confirm('Delete everything?')) { document.getElementById('dialog-result').textContent = 'accepted' } else { document.getElementById('dialog-result').textContent = 'dismissed' }">Danger Zone</button>
+  <span id="dialog-result"></span>
+
+  <form onsubmit="event.preventDefault(); document.getElementById('submitted').textContent = document.getElementById('fullname').value">
+    <label for="fullname">Full name</label>
+    <input id="fullname" name="fullname" type="text">
+    <button type="submit" id="btn-form-submit">Send Form</button>
+  </form>
+  <span id="submitted"></span>
+
+  <label for="color">Favorite color</label>
+  <select id="color">
+    <option value="r">Red</option>
+    <option value="g">Green</option>
+    <option value="b">Blue</option>
+  </select>
+  <span id="color-picked"></span>
+
+  <label><input id="subscribe" type="checkbox" onchange="document.getElementById('sub-state').textContent = this.checked ? 'yes' : 'no'"> Subscribe</label>
+  <span id="sub-state"></span>
+
+  <a id="about-link" href="about.html">About</a>
+  <a id="dl-link" href="download.txt" download>Download notes</a>
+
+  <div id="delayed"></div>
+  <script>setTimeout(function () { document.getElementById('delayed').textContent = 'Delayed content'; }, 400);</script>
+
+  <input id="upload" type="file" style="border:1px solid #ccc"
+         onchange="document.getElementById('upload-name').textContent = this.files[0].name">
+  <span id="upload-name"></span>
+
+  <iframe id="child" src="child.html" width="300" height="80" title="child frame"></iframe>
+
+  <div style="height:3000px">tall content for scrolling</div>
+</body>
+</html>
