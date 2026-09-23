@@ -89,6 +89,7 @@ class Assistant(Agent):
                         - Know the address? Use open_url. Searching instead? Use search_the_web, then read_page.
                         - read_page returns the page's visible text. inspect_page lists the buttons, links and fields by their names, and is the right call when you need to act but are unsure what to target.
                         - click, type_text, select_option, press_key and scroll act on an element by its visible name. navigate goes back, forward or reload. manage_tabs opens and switches tabs. wait_for waits for text, a URL or a download before you carry on.
+                        - Before clicking or typing, inspect_page or read_page the page you are on. You may have no page open at all: if nothing relevant is open, ask the user which site to open instead of guessing element names.
                         - take_screenshot adds a picture of the page to the conversation, for when you must actually see it.
                         - handle_dialog deals with a popup. network_log lists requests when a page will not load. execute_javascript is a last resort when no other tool fits.
                         - upload_file attaches a local file to a form; manage_site_data lists or clears cookies and storage when a page is stuck.
@@ -161,9 +162,13 @@ async def my_agent(ctx: JobContext):
             # Adaptive interruptions use the turn detector to tell a real interruption from a
             # backchannel like "mhm" or "right", so the agent keeps talking through the latter.
             interruption={"mode": "adaptive"},
-            # allow the LLM to generate a response while waiting for the end of turn
-            # See more at https://docs.livekit.io/agents/build/audio/#preemptive-generation
-            preemptive_generation={"enabled": True},
+            # Preemptive generation lets the LLM start replying before end of
+            # turn is confirmed (https://docs.livekit.io/agents/build/audio/#preemptive-generation).
+            # Keep it for voice latency, but disable it under a text simulation:
+            # its first-turn speculation races the simulator's opening message
+            # and corrupts the transcript (agent output lands under role: user,
+            # the opening line is dropped), failing scenarios at random.
+            preemptive_generation={"enabled": ctx.simulation_context() is None},
         ),
         # Browser flows chain inspect -> act -> read -> verify, which exceeds the
         # default of 3 steps and would otherwise cut a task off mid-way.
